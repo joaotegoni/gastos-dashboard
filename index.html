@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<title>Gastos</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231a1a1a' rx='40'/><text x='50%25' y='50%25' font-size='100' text-anchor='middle' dy='.35em' fill='white'>$</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    padding-top: max(env(safe-area-inset-top), 16px);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #000; color: #f5f5f7; }
+    .card { background: #1c1c1e !important; }
+    .muted { color: #98989d !important; }
+    .divider { background: #2c2c2e !important; }
+    .btn { background: #2c2c2e !important; color: #f5f5f7 !important; }
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 24px 4px 16px;
+  }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .month {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+  }
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .balance-card {
+    background: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%);
+    color: white;
+    padding: 28px 24px;
+  }
+  .balance-card .muted { color: rgba(255,255,255,0.6) !important; }
+  .balance-label {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  .balance-value {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+  .balance-detail {
+    font-size: 15px;
+    opacity: 0.85;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .stat-card { padding: 18px; }
+  .stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 24px 4px 12px;
+  }
+  .category-row, .transaction-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+  }
+  .category-row + .category-row,
+  .transaction-row + .transaction-row {
+    border-top: 0.5px solid rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    .category-row + .category-row,
+    .transaction-row + .transaction-row {
+      border-top-color: rgba(255,255,255,0.1);
+    }
+  }
+  .cat-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 12px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .cat-mercado { background: #34c759; }
+  .cat-restaurante { background: #ff9500; }
+  .cat-farmacia { background: #ff3b30; }
+  .cat-transporte { background: #007aff; }
+  .cat-lazer { background: #af52de; }
+  .cat-moradia { background: #5856d6; }
+  .cat-saude { background: #ff2d55; }
+  .cat-outro { background: #8e8e93; }
+  .row-info { flex: 1; min-width: 0; }
+  .row-title {
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  .row-sub {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-top: 2px;
+  }
+  .row-value {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .progress-bar {
+    height: 6px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .progress-bar { background: rgba(255,255,255,0.1); }
+  }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .controls {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+  .btn {
+    flex: 1;
+    background: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #007aff;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:active { opacity: 0.6; }
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #8e8e93;
+  }
+  .empty-icon { font-size: 48px; opacity: 0.3; margin-bottom: 12px; }
+  .loader {
+    display: flex;
+    justify-content: center;
+    padding: 60px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-top-color: #007aff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .muted { color: #8e8e93; }
+  .divider { height: 0.5px; background: rgba(0,0,0,0.08); margin: 4px 0; }
+  .person-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .person-bar:last-child { margin-bottom: 0; }
+  .person-name {
+    width: 60px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .person-track {
+    flex: 1;
+    height: 24px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  @media (prefers-color-scheme: dark) {
+    .person-track { background: rgba(255,255,255,0.1); }
+  }
+  .person-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+  }
+  .person-fill.joao { background: #007aff; }
+  .person-fill.alice { background: #ff2d55; }
+  .person-value {
+    width: 90px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 12px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gastos</h1>
+  <span class="month" id="currentMonth">—</span>
+</header>
+
+<div id="content">
+  <div class="loader"><div class="spinner"></div></div>
+</div>
+
+<div class="controls">
+  <button class="btn" onclick="changeMonth(-1)">← Anterior</button>
+  <button class="btn" onclick="resetMonth()">Atual</button>
+  <button class="btn" onclick="changeMonth(1)">Próximo →</button>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjUDtVlV6jvtmv4fH5vxWF582v-lMFgjTTrsN8OtEChleTXwIV71X1H_VuGuddNenA5sD37nK_gA-y/pub?gid=0&single=true&output=csv';
+
+const CAT_ICONS = {
+  mercado: '🛒', restaurante: '🍽️', farmacia: '💊',
+  transporte: '🚗', lazer: '🎬', moradia: '🏠',
+  saude: '⚕️', outro: '📦'
+};
+
+const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let viewDate = new Date();
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  return lines.slice(1).map(line => {
+    const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+    const row = {};
+    headers.forEach((h, i) => {
+      row[h] = (values[i] || '').replace(/^"|"$/g, '').trim();
+    });
+    return row;
+  });
+}
+
+function formatBRL(value) {
+  return 'R$ ' + value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function getMonthKey(date) {
+  return `${date.getMonth() + 1}/${date.getFullYear()}`;
+}
+
+async function load() {
+  try {
+    const res = await fetch(CSV_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const rows = parseCSV(text);
+    render(rows);
+  } catch (e) {
+    document.getElementById('content').innerHTML =
+      '<div class="card empty"><div class="empty-icon">⚠️</div>Erro ao carregar dados</div>';
+  }
+}
+
+function render(allRows) {
+  const monthKey = getMonthKey(viewDate);
+  document.getElementById('currentMonth').textContent =
+    `${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+
+  const rows = allRows.filter(r => r.mes === monthKey);
+
+  if (rows.length === 0) {
+    document.getElementById('content').innerHTML =
+      '<div class="card empty"><div class="empty-icon">📭</div>Nenhum gasto neste mês</div>';
+    return;
+  }
+
+  // Totais
+  let totalGeral = 0;
+  const porPessoa = {};
+  const porCategoria = {};
+  rows.forEach(r => {
+    const v = parseFloat(r.valor.replace(',', '.')) || 0;
+    totalGeral += v;
+    const pessoa = (r.quem_pagou || 'sem nome').toLowerCase();
+    porPessoa[pessoa] = (porPessoa[pessoa] || 0) + v;
+    const cat = (r.categoria || 'outro').toLowerCase();
+    porCategoria[cat] = (porCategoria[cat] || 0) + v;
+  });
+
+  // Saldo
+  const pessoas = Object.keys(porPessoa);
+  let saldoHTML = '';
+  if (pessoas.length === 2) {
+    const [a, b] = pessoas;
+    const diff = porPessoa[a] - porPessoa[b];
+    const metade = Math.abs(diff) / 2;
+    if (Math.abs(diff) < 0.01) {
+      saldoHTML = `
+        <div class="balance-label">Saldo</div>
+        <div class="balance-value">Quitado ✓</div>
+        <div class="balance-detail">Vocês estão em dia</div>`;
+    } else {
+      const credor = diff > 0 ? a : b;
+      const devedor = diff > 0 ? b : a;
+      saldoHTML = `
+        <div class="balance-label">Saldo</div>
+        <div class="balance-value">${formatBRL(metade)}</div>
+        <div class="balance-detail">${cap(devedor)} deve ao ${cap(credor)}</div>`;
+    }
+  } else {
+    saldoHTML = `
+      <div class="balance-label">Total do mês</div>
+      <div class="balance-value">${formatBRL(totalGeral)}</div>
+      <div class="balance-detail">${rows.length} lançamentos</div>`;
+  }
+
+  // Categorias
+  const catSorted = Object.entries(porCategoria).sort((a,b) => b[1] - a[1]);
+  const catHTML = catSorted.map(([cat, val]) => {
+    const pct = (val / totalGeral) * 100;
+    return `
+      <div class="category-row">
+        <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
+        <div class="row-info">
+          <div class="row-title">${cat}</div>
+          <div class="progress-bar"><div class="progress-fill cat-${cat}" style="width:${pct}%"></div></div>
+        </div>
+        <div class="row-value">${formatBRL(val)}</div>
+      </div>`;
+  }).join('');
+
+  // Pessoas
+  const maxPessoa = Math.max(...Object.values(porPessoa));
+  const pessoasHTML = Object.entries(porPessoa).sort((a,b) => b[1] - a[1]).map(([p, v]) => {
+    const pct = (v / maxPessoa) * 100;
+    return `
+      <div class="person-bar">
+        <div class="person-name">${cap(p)}</div>
+        <div class="person-track"><div class="person-fill ${p}" style="width:${pct}%"></div></div>
+        <div class="person-value">${formatBRL(v)}</div>
+      </div>`;
+  }).join('');
+
+  // Últimos lançamentos
+  const ultimos = rows.slice(-8).reverse();
+  const ultimosHTML = ultimos.map(r => {
+    const v = parseFloat(r.valor.replace(',', '.')) || 0;
+    const cat = (r.categoria || 'outro').toLowerCase();
+    return `
+      <div class="transaction-row">
+        <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
+        <div class="row-info">
+          <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
+          <div class="row-sub">${r.data} · ${cap(r.quem_pagou)}</div>
+        </div>
+        <div class="row-value">${formatBRL(v)}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="card balance-card">${saldoHTML}</div>
+
+    <div class="stats-row">
+      <div class="card stat-card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value">${formatBRL(totalGeral)}</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Lançamentos</div>
+        <div class="stat-value">${rows.length}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Por pessoa</div>
+    <div class="card">${pessoasHTML}</div>
+
+    <div class="section-title">Por categoria</div>
+    <div class="card">${catHTML}</div>
+
+    <div class="section-title">Últimos lançamentos</div>
+    <div class="card">${ultimosHTML}</div>
+  `;
+}
+
+function cap(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function changeMonth(delta) {
+  viewDate.setMonth(viewDate.getMonth() + delta);
+  load();
+}
+
+function resetMonth() {
+  viewDate = new Date();
+  load();
+}
+
+load();
+
+// Recarrega ao voltar pra aba
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) load();
+});
+</script>
+</body>
+</html>
