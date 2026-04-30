@@ -1,1 +1,1 @@
-# gasstos-dashboard
+# gastos-dashboard
