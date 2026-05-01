@@ -9,65 +9,207 @@
 <title>Gastos</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231a1a1a' rx='40'/><text x='50%25' y='50%25' font-size='100' text-anchor='middle' dy='.35em' fill='white'>$</text></svg>">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* ============================================================
+     iOS Liquid Glass — design tokens
+     Dominant: translucent neutral. Accent: iOS system blue.
+     ============================================================ */
+  :root {
+    /* tipografia */
+    --num: "SF Pro Text", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+    /* paleta sistema iOS (light) */
+    --ios-blue: #007aff;
+    --ios-green: #34c759;
+    --ios-orange: #ff9500;
+    --ios-red: #ff3b30;
+    --ios-pink: #ff2d55;
+    --ios-purple: #af52de;
+    --ios-indigo: #5856d6;
+    --ios-gray: #8e8e93;
+
+    /* superfícies (light) — backgrounds compostos com gradiente sutil */
+    --bg-base: #f2f2f7;
+    --bg-tint-1: rgba(0, 122, 255, 0.06);   /* mancha azul superior */
+    --bg-tint-2: rgba(255, 45, 85, 0.04);   /* mancha rosa inferior */
+
+    /* glass */
+    --glass-bg: rgba(255, 255, 255, 0.62);
+    --glass-bg-strong: rgba(255, 255, 255, 0.78);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --glass-border-inner: rgba(0, 0, 0, 0.04);
+    --glass-blur: blur(28px) saturate(180%);
+
+    /* texto */
+    --fg: #1d1d1f;
+    --fg-muted: #6e6e73;
+    --fg-subtle: #8e8e93;
+    --hairline: rgba(60, 60, 67, 0.12);
+
+    /* sombras (sutis, tipo "lift" não "drop") */
+    --shadow-card: 0 1px 1px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.10);
+    --shadow-hero: 0 1px 1px rgba(0,0,0,0.06), 0 14px 40px -16px rgba(0,0,0,0.22);
+
+    /* highlight specular (linha de luz no topo do vidro) */
+    --specular: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.85) 0%,
+      rgba(255,255,255,0.0) 60%
+    );
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-base: #000;
+      --bg-tint-1: rgba(10, 132, 255, 0.10);
+      --bg-tint-2: rgba(175, 82, 222, 0.08);
+
+      --glass-bg: rgba(28, 28, 30, 0.62);
+      --glass-bg-strong: rgba(44, 44, 46, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-border-inner: rgba(255, 255, 255, 0.04);
+
+      --fg: #f5f5f7;
+      --fg-muted: #aeaeb2;
+      --fg-subtle: #8e8e93;
+      --hairline: rgba(255, 255, 255, 0.08);
+
+      --shadow-card: 0 1px 1px rgba(0,0,0,0.4), 0 12px 32px -16px rgba(0,0,0,0.6);
+      --shadow-hero: 0 1px 1px rgba(0,0,0,0.5), 0 18px 48px -20px rgba(0,0,0,0.8);
+
+      --specular: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.16) 0%,
+        rgba(255,255,255,0.0) 60%
+      );
+    }
+  }
+
+  /* Reset e base */
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body { min-height: 100%; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-    background: #f5f5f7;
-    color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg-base);
+    /* Camadas de fundo: gradientes radiais coloridos sutis sobre a base.
+       Em iOS dão a sensação de "ambient light" por trás do vidro. */
+    background-image:
+      radial-gradient(ellipse 80% 50% at 12% 0%, var(--bg-tint-1), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 90% 100%, var(--bg-tint-2), transparent 65%);
+    background-attachment: fixed;
     padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-top: max(env(safe-area-inset-top), 12px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 88px); /* deixa espaço pra controles fixos */
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  @media (prefers-color-scheme: dark) {
-    body { background: #000; color: #f5f5f7; }
-    .card { background: #1c1c1e !important; }
-    .muted { color: #98989d !important; }
-    .divider { background: #2c2c2e !important; }
-    .btn { background: #2c2c2e !important; color: #f5f5f7 !important; }
+
+  /* Tabular numerals em qualquer valor monetário ou percentual */
+  .row-value, .stat-value, .balance-value, .renda-value, .renda-pct,
+  .person-value, .row-value-stack .teto, .row-sub.budget-resta,
+  .renda-sobra, .fixo-highlight, .month {
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-variant-numeric: tabular-nums lining-nums;
   }
+
+  /* ============ Header ============ */
   header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    padding: 24px 4px 16px;
+    padding: 24px 4px 18px;
   }
-  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+  }
   .month {
     font-size: 14px;
-    font-weight: 500;
-    color: #8e8e93;
+    font-weight: 600;
+    color: var(--fg-subtle);
+    letter-spacing: 0.1px;
   }
+
+  /* ============ Card base — Liquid Glass ============ */
   .card {
-    background: white;
-    border-radius: 14px;
+    position: relative;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 18px;
     padding: 20px;
     margin-bottom: 12px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    isolation: isolate;
+    /* entrada sutil */
+    animation: glass-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
+  /* specular highlight no topo (linha de luz) */
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 36%;
+    background: var(--specular);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+    mask: linear-gradient(black, transparent);
+    -webkit-mask: linear-gradient(black, transparent);
+  }
+  .card > * { position: relative; z-index: 2; }
+
+  /* ============ Balance card (herói) — glass denso ============ */
   .balance-card {
-    background: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%);
-    color: white;
-    padding: 28px 24px;
+    background:
+      linear-gradient(160deg, rgba(0,122,255,0.85) 0%, rgba(88,86,214,0.78) 60%, rgba(175,82,222,0.74) 100%),
+      var(--glass-bg-strong);
+    color: #fff;
+    padding: 28px 24px 26px;
+    border: 0.5px solid rgba(255,255,255,0.22);
+    box-shadow: var(--shadow-hero);
   }
-  .balance-card .muted { color: rgba(255,255,255,0.6) !important; }
+  .balance-card::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.35) 0%,
+      rgba(255,255,255,0.0) 55%
+    );
+    height: 50%;
+  }
+  .balance-card .muted { color: rgba(255,255,255,0.7) !important; }
   .balance-label {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    opacity: 0.7;
-    margin-bottom: 8px;
+    letter-spacing: 1.2px;
+    opacity: 0.78;
+    margin-bottom: 10px;
   }
   .balance-value {
-    font-size: 36px;
-    font-weight: 700;
-    letter-spacing: -1px;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
     margin-bottom: 6px;
   }
   .balance-detail {
     font-size: 15px;
-    opacity: 0.85;
+    opacity: 0.92;
+    font-weight: 500;
   }
+
+  /* ============ Stats row ============ */
   .stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -76,124 +218,164 @@
   }
   .stat-card { padding: 18px; }
   .stat-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: #8e8e93;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--fg-subtle);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     margin-bottom: 6px;
   }
   .stat-value {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
   }
+
+  /* ============ Section title ============ */
   .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #8e8e93;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fg-subtle);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 24px 4px 12px;
+    letter-spacing: 1.1px;
+    padding: 26px 4px 10px;
   }
-  .category-row, .transaction-row {
+
+  /* ============ Linhas (categoria, transação, fixo) ============ */
+  .category-row, .transaction-row, .fixo-row {
     display: flex;
     align-items: center;
     padding: 14px 0;
   }
   .category-row + .category-row,
-  .transaction-row + .transaction-row {
-    border-top: 0.5px solid rgba(0,0,0,0.08);
+  .transaction-row + .transaction-row,
+  .fixo-row + .fixo-row {
+    border-top: 0.5px solid var(--hairline);
   }
-  @media (prefers-color-scheme: dark) {
-    .category-row + .category-row,
-    .transaction-row + .transaction-row {
-      border-top-color: rgba(255,255,255,0.1);
-    }
-  }
+
   .cat-icon {
-    width: 36px; height: 36px;
-    border-radius: 10px;
+    width: 38px; height: 38px;
+    border-radius: 11px;
     display: flex; align-items: center; justify-content: center;
     margin-right: 12px;
     font-size: 18px;
     flex-shrink: 0;
+    color: #fff;
+    /* leve specular nos ícones pra eles também parecerem "vidro colorido" */
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.35),
+      inset 0 -1px 0 rgba(0,0,0,0.08);
   }
-  .cat-mercado { background: #34c759; }
-  .cat-restaurante { background: #ff9500; }
-  .cat-farmacia { background: #ff3b30; }
-  .cat-transporte { background: #007aff; }
-  .cat-lazer { background: #af52de; }
-  .cat-moradia { background: #5856d6; }
-  .cat-saude { background: #ff2d55; }
-  .cat-outro { background: #8e8e93; }
-  .row-info { flex: 1; min-width: 0; }
+  .cat-mercado     { background: var(--ios-green); }
+  .cat-restaurante { background: var(--ios-orange); }
+  .cat-farmacia    { background: var(--ios-red); }
+  .cat-transporte  { background: var(--ios-blue); }
+  .cat-lazer       { background: var(--ios-purple); }
+  .cat-moradia     { background: var(--ios-indigo); }
+  .cat-saude       { background: var(--ios-pink); }
+  .cat-outro       { background: var(--ios-gray); }
+
+  .row-info { flex: 1; min-width: 0; padding-right: 10px; }
   .row-title {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: capitalize;
+    letter-spacing: -0.1px;
   }
   .row-sub {
     font-size: 13px;
-    color: #8e8e93;
-    margin-top: 2px;
+    color: var(--fg-subtle);
+    margin-top: 3px;
+    font-weight: 500;
   }
   .row-value {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     text-align: right;
     flex-shrink: 0;
+    letter-spacing: -0.2px;
   }
+
+  /* ============ Progress bar ============ */
   .progress-bar {
     height: 6px;
-    background: rgba(0,0,0,0.06);
-    border-radius: 3px;
+    background: rgba(120, 120, 128, 0.16);
+    border-radius: 999px;
     overflow: hidden;
     margin-top: 8px;
   }
   @media (prefers-color-scheme: dark) {
-    .progress-bar { background: rgba(255,255,255,0.1); }
+    .progress-bar { background: rgba(120, 120, 128, 0.32); }
   }
-  .progress-fill { height: 100%; border-radius: 3px; }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  /* ============ Controles de mês — glass com pill shape ============ */
   .controls {
+    position: fixed;
+    left: 16px; right: 16px;
+    bottom: max(env(safe-area-inset-bottom), 12px);
     display: flex;
     gap: 8px;
-    padding: 8px 0 0;
+    padding: 8px;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 0.5px solid var(--glass-border);
+    border-radius: 999px;
+    box-shadow: var(--shadow-hero);
+    z-index: 50;
   }
   .btn {
     flex: 1;
-    background: white;
+    background: transparent;
     border: none;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 500;
-    color: #007aff;
+    padding: 11px 8px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ios-blue);
     cursor: pointer;
     font-family: inherit;
+    letter-spacing: -0.1px;
+    transition: transform 120ms ease, background 160ms ease;
   }
-  .btn:active { opacity: 0.6; }
+  .btn:active { transform: scale(0.96); background: rgba(0,122,255,0.10); }
+  @media (prefers-color-scheme: dark) {
+    .btn { color: #0a84ff; }
+    .btn:active { background: rgba(10,132,255,0.18); }
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--ios-blue);
+    outline-offset: 2px;
+  }
+
+  /* ============ Empty / loader ============ */
   .empty {
     text-align: center;
-    padding: 40px 20px;
-    color: #8e8e93;
+    padding: 44px 20px;
+    color: var(--fg-subtle);
+    font-weight: 500;
   }
-  .empty-icon { font-size: 48px; opacity: 0.3; margin-bottom: 12px; }
-  .loader {
-    display: flex;
-    justify-content: center;
-    padding: 60px;
-  }
+  .empty-icon { font-size: 48px; opacity: 0.35; margin-bottom: 12px; }
+  .loader { display: flex; justify-content: center; padding: 60px; }
   .spinner {
     width: 32px; height: 32px;
-    border: 3px solid rgba(0,0,0,0.1);
-    border-top-color: #007aff;
+    border: 3px solid rgba(120,120,128,0.20);
+    border-top-color: var(--ios-blue);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .muted { color: #8e8e93; }
-  .divider { height: 0.5px; background: rgba(0,0,0,0.08); margin: 4px 0; }
+
+  /* ============ Utility ============ */
+  .muted { color: var(--fg-subtle); }
+  .divider { height: 0.5px; background: var(--hairline); margin: 6px 0; border: 0; }
+
+  /* ============ Por pessoa ============ */
   .person-bar {
     display: flex;
     align-items: center;
@@ -203,32 +385,166 @@
   .person-name {
     width: 60px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
   }
   .person-track {
     flex: 1;
-    height: 24px;
-    background: rgba(0,0,0,0.06);
-    border-radius: 6px;
+    height: 26px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 8px;
     overflow: hidden;
     position: relative;
   }
   @media (prefers-color-scheme: dark) {
-    .person-track { background: rgba(255,255,255,0.1); }
+    .person-track { background: rgba(120,120,128,0.32); }
   }
   .person-fill {
     height: 100%;
-    border-radius: 6px;
-    transition: width 0.4s ease;
+    border-radius: 8px;
+    transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
   }
-  .person-fill.joao { background: #007aff; }
-  .person-fill.alice { background: #ff2d55; }
+  .person-fill.joao  { background: linear-gradient(135deg, #007aff, #0a84ff); }
+  .person-fill.alice { background: linear-gradient(135deg, #ff2d55, #ff375f); }
   .person-value {
-    width: 90px;
+    width: 92px;
     text-align: right;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     margin-left: 12px;
+    letter-spacing: -0.1px;
+  }
+
+  /* ============ Fixos do mês ============ */
+  .fixo-row.total { padding-top: 14px; }
+  .fixo-row.total .row-title { font-weight: 700; }
+  .fixo-row.total .row-value { font-weight: 800; font-size: 18px; }
+  .fixo-highlight {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background:
+      linear-gradient(135deg, rgba(0,122,255,0.14), rgba(88,86,214,0.10));
+    border: 0.5px solid rgba(0,122,255,0.18);
+    border-radius: 14px;
+    font-size: 15px;
+    color: var(--ios-blue);
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+  }
+  .fixo-highlight strong { font-weight: 800; }
+  @media (prefers-color-scheme: dark) {
+    .fixo-highlight {
+      background: linear-gradient(135deg, rgba(10,132,255,0.18), rgba(94,92,230,0.14));
+      border-color: rgba(10,132,255,0.25);
+      color: #0a84ff;
+    }
+  }
+
+  /* ============ Renda comprometida ============ */
+  .renda-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .renda-info { min-width: 0; }
+  .renda-value {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    margin-top: 4px;
+  }
+  .renda-value .muted {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .renda-pct {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .renda-bar {
+    height: 12px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    .renda-bar { background: rgba(120,120,128,0.32); }
+  }
+  .renda-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .renda-sobra {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--fg-subtle);
+    text-align: right;
+    font-weight: 500;
+  }
+  .renda-sobra strong {
+    color: var(--fg);
+    font-weight: 700;
+  }
+
+  /* ============ Status (verde / amarelo / vermelho) ============ */
+  /* fills com gradiente sutil pra dar sensação de "líquido" */
+  .bar-ok   { background: linear-gradient(135deg, #34c759, #30d158) !important; }
+  .bar-warn { background: linear-gradient(135deg, #ff9500, #ffaa33) !important; }
+  .bar-over { background: linear-gradient(135deg, #ff3b30, #ff453a) !important; }
+  .text-ok   { color: var(--ios-green); }
+  .text-warn { color: var(--ios-orange); }
+  .text-over { color: var(--ios-red); }
+  .row-sub.budget-resta { font-weight: 600; }
+
+  /* ============ Categoria com budget — pilha de valores à direita ============ */
+  .row-value-stack {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .row-value-stack .row-value { font-size: 16px; font-weight: 700; }
+  .row-value-stack .teto {
+    font-size: 12px;
+    color: var(--fg-subtle);
+    margin-top: 2px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+  }
+
+  /* ============ Animations ============ */
+  @keyframes glass-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Stagger das entradas: aplicado via nth-of-type no #content */
+  #content > .card:nth-of-type(1)  { animation-delay:  0ms; }
+  #content > .card:nth-of-type(2)  { animation-delay: 40ms; }
+  #content > .card:nth-of-type(3)  { animation-delay: 80ms; }
+  #content > .card:nth-of-type(4)  { animation-delay: 120ms; }
+  #content > .card:nth-of-type(5)  { animation-delay: 160ms; }
+  #content > .card:nth-of-type(6)  { animation-delay: 200ms; }
+  #content > .card:nth-of-type(7)  { animation-delay: 240ms; }
+  #content > .stats-row .card { animation: glass-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /* Fallback: navegadores sem backdrop-filter ganham fundo sólido legível */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .card { background: var(--glass-bg-strong); }
+    .controls { background: var(--glass-bg-strong); }
   }
 </style>
 </head>
@@ -251,6 +567,25 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjUDtVlV6jvtmv4fH5vxWF582v-lMFgjTTrsN8OtEChleTXwIV71X1H_VuGuddNenA5sD37nK_gA-y/pub?gid=0&single=true&output=csv';
 
+const RENDA_MENSAL = 13000;
+const PERCENTUAL_ALICE = 0.35;
+
+const FIXOS = [
+  { motivo: 'Aluguel',    valor: 2407.55, vencimento: 8  },
+  { motivo: 'Internet',   valor: 79.90,   vencimento: 10 },
+  { motivo: 'Condomínio', valor: 800.00,  vencimento: 10 },
+  { motivo: 'Energia',    valor: 180.00,  vencimento: 20 }
+];
+
+// Tetos por categoria. Categorias sem entrada aqui aparecem sem budget.
+const BUDGET_CATEGORIA = {
+  mercado: 1600,
+  restaurante: 800,
+  transporte: 100,
+  lazer: 300,
+  farmacia: 150
+};
+
 const CAT_ICONS = {
   mercado: '🛒', restaurante: '🍽️', farmacia: '💊',
   transporte: '🚗', lazer: '🎬', moradia: '🏠',
@@ -261,6 +596,21 @@ const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 let viewDate = new Date();
+
+function stripAccents(s) {
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function normalizeCat(cat) {
+  return stripAccents((cat || 'outro').toLowerCase().trim());
+}
+
+// Retorna 'ok' (<70%), 'warn' (70-90%), 'over' (>=90%) — usado pra colorir barras/textos.
+function statusClass(pct) {
+  if (pct < 70) return 'ok';
+  if (pct < 90) return 'warn';
+  return 'over';
+}
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -295,6 +645,66 @@ async function load() {
   }
 }
 
+// Total dos fixos (constante, mas vira função pra deixar fácil somar futuro).
+function totalFixos() {
+  return FIXOS.reduce((s, f) => s + f.valor, 0);
+}
+
+// Card de fixos do mês: lista + total + destaque do repasse da Alice.
+function renderFixos() {
+  const total = totalFixos();
+  const pagaAlice = total * PERCENTUAL_ALICE;
+  const linhas = FIXOS.map(f => `
+    <div class="fixo-row">
+      <div class="row-info">
+        <div class="row-title">${f.motivo}</div>
+        <div class="row-sub">vence dia ${f.vencimento}</div>
+      </div>
+      <div class="row-value">${formatBRL(f.valor)}</div>
+    </div>`).join('');
+  return `
+    <div class="card">
+      ${linhas}
+      <div class="divider"></div>
+      <div class="fixo-row total">
+        <div class="row-info"><div class="row-title">Total</div></div>
+        <div class="row-value">${formatBRL(total)}</div>
+      </div>
+      <div class="fixo-highlight">
+        Alice te paga <strong>${formatBRL(pagaAlice)}</strong>
+      </div>
+    </div>`;
+}
+
+// Card de renda comprometida: comprometido = fixos + variáveis (sem dividir).
+function renderRenda(totalVariavel) {
+  const comprometido = totalFixos() + totalVariavel;
+  const sobra = RENDA_MENSAL - comprometido;
+  const pctReal = (comprometido / RENDA_MENSAL) * 100;
+  const pctBar = Math.min(100, pctReal);
+  const cls = statusClass(pctReal);
+  const sobraLabel = sobra >= 0 ? 'Sobra' : 'Excedido em';
+  return `
+    <div class="card">
+      <div class="renda-header">
+        <div class="renda-info">
+          <div class="stat-label">Renda comprometida</div>
+          <div class="renda-value">
+            ${formatBRL(comprometido)}
+            <span class="muted">/ ${formatBRL(RENDA_MENSAL)}</span>
+          </div>
+        </div>
+        <div class="renda-pct text-${cls}">${Math.round(pctReal)}%</div>
+      </div>
+      <div class="renda-bar">
+        <div class="renda-fill bar-${cls}" style="width:${pctBar}%"></div>
+      </div>
+      <div class="renda-sobra">
+        ${sobraLabel} <strong>${formatBRL(Math.abs(sobra))}</strong>
+      </div>
+    </div>`;
+}
+
 function render(allRows) {
   const monthKey = getMonthKey(viewDate);
   document.getElementById('currentMonth').textContent =
@@ -302,9 +712,17 @@ function render(allRows) {
 
   const rows = allRows.filter(r => r.mes === monthKey);
 
+  // Mês vazio: mostra fixos e renda comprometida (variável = 0) mesmo sem lançamentos.
   if (rows.length === 0) {
-    document.getElementById('content').innerHTML =
-      '<div class="card empty"><div class="empty-icon">📭</div>Nenhum gasto neste mês</div>';
+    document.getElementById('content').innerHTML = `
+      <div class="card empty"><div class="empty-icon">📭</div>Nenhum gasto neste mês</div>
+
+      <div class="section-title">Fixos do mês</div>
+      ${renderFixos()}
+
+      <div class="section-title">Renda comprometida</div>
+      ${renderRenda(0)}
+    `;
     return;
   }
 
@@ -312,12 +730,14 @@ function render(allRows) {
   let totalGeral = 0;
   const porPessoa = {};
   const porCategoria = {};
+  // Pré-popula categorias com budget pra elas aparecerem mesmo sem gastos no mês.
+  Object.keys(BUDGET_CATEGORIA).forEach(c => { porCategoria[c] = 0; });
   rows.forEach(r => {
     const v = parseFloat(r.valor.replace(',', '.')) || 0;
     totalGeral += v;
-    const pessoa = (r.quem_pagou || 'sem nome').toLowerCase();
+    const pessoa = stripAccents((r.quem_pagou || 'sem nome').toLowerCase().trim());
     porPessoa[pessoa] = (porPessoa[pessoa] || 0) + v;
-    const cat = (r.categoria || 'outro').toLowerCase();
+    const cat = normalizeCat(r.categoria);
     porCategoria[cat] = (porCategoria[cat] || 0) + v;
   });
 
@@ -348,10 +768,36 @@ function render(allRows) {
       <div class="balance-detail">${rows.length} lançamentos</div>`;
   }
 
-  // Categorias
+  // Categorias — categorias com budget mostram gasto/teto, %, sobra, e cor por faixa.
+  // Sort: primeiro maiores gastos (com ou sem budget); empatadas em 0 ficam por último.
   const catSorted = Object.entries(porCategoria).sort((a,b) => b[1] - a[1]);
   const catHTML = catSorted.map(([cat, val]) => {
-    const pct = (val / totalGeral) * 100;
+    const teto = BUDGET_CATEGORIA[cat];
+    if (teto != null) {
+      const pctReal = (val / teto) * 100;
+      const pctBar = Math.min(100, pctReal);
+      const sobra = teto - val;
+      const cls = statusClass(pctReal);
+      const subText = sobra >= 0
+        ? `Resta ${formatBRL(sobra)} · ${Math.round(pctReal)}%`
+        : `${formatBRL(-sobra)} acima do teto`;
+      const subCls = sobra >= 0 ? `text-${cls}` : 'text-over';
+      return `
+        <div class="category-row">
+          <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
+          <div class="row-info">
+            <div class="row-title">${cat}</div>
+            <div class="progress-bar"><div class="progress-fill bar-${cls}" style="width:${pctBar}%"></div></div>
+            <div class="row-sub budget-resta ${subCls}">${subText}</div>
+          </div>
+          <div class="row-value-stack">
+            <div class="row-value">${formatBRL(val)}</div>
+            <div class="teto">de ${formatBRL(teto)}</div>
+          </div>
+        </div>`;
+    }
+    // Sem budget — comportamento original (barra proporcional ao total do mês).
+    const pct = totalGeral > 0 ? (val / totalGeral) * 100 : 0;
     return `
       <div class="category-row">
         <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
@@ -379,7 +825,7 @@ function render(allRows) {
   const ultimos = rows.slice(-8).reverse();
   const ultimosHTML = ultimos.map(r => {
     const v = parseFloat(r.valor.replace(',', '.')) || 0;
-    const cat = (r.categoria || 'outro').toLowerCase();
+    const cat = normalizeCat(r.categoria);
     return `
       <div class="transaction-row">
         <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
@@ -393,6 +839,12 @@ function render(allRows) {
 
   document.getElementById('content').innerHTML = `
     <div class="card balance-card">${saldoHTML}</div>
+
+    <div class="section-title">Fixos do mês</div>
+    ${renderFixos()}
+
+    <div class="section-title">Renda comprometida</div>
+    ${renderRenda(totalGeral)}
 
     <div class="stats-row">
       <div class="card stat-card">
