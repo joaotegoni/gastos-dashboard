@@ -4,10 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
 <title>Gastos</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%231a1a1a' rx='40'/><text x='50%25' y='50%25' font-size='100' text-anchor='middle' dy='.35em' fill='white'>$</text></svg>">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23007aff'/><stop offset='0.6' stop-color='%235856d6'/><stop offset='1' stop-color='%23af52de'/></linearGradient></defs><rect width='180' height='180' fill='url(%23g)' rx='40'/><text x='50%25' y='50%25' font-size='100' font-weight='800' text-anchor='middle' dy='.35em' fill='white' font-family='-apple-system,system-ui,sans-serif'>$</text></svg>">
 <style>
   /* ============================================================
      iOS Liquid Glass — design tokens
@@ -134,6 +138,13 @@
     pointer-events: none;
     z-index: 0;
     overflow: hidden;
+    /* O filter (hue-rotate) é aplicado via JS no scroll handler.
+       iOS Safari tem bug com calc(var() * deg) dentro de filter, então
+       seto a string completa diretamente em element.style.filter. */
+    will-change: filter;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aurora { filter: none !important; }
   }
   .aurora-layer {
     position: absolute;
@@ -1034,6 +1045,201 @@
     .proj-disclaimer { background: rgba(120,120,128,0.16); }
   }
 
+  /* ============ Header meta + freshness ============ */
+  .header-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .freshness {
+    font-size: 12px;
+    color: var(--fg-subtle);
+    font-weight: 500;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  /* ============ Pull-to-refresh ============ */
+  .ptr {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ios-blue);
+    padding: 14px;
+    transform: translateY(-100%);
+    transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1), color 200ms ease;
+    z-index: 60;
+    pointer-events: none;
+    letter-spacing: -0.1px;
+  }
+  .ptr.show { transform: translateY(0); }
+  .ptr.ready { color: var(--ios-green); }
+  .ptr.refreshing { color: var(--ios-blue); }
+  @media (prefers-color-scheme: dark) {
+    .ptr { color: #0a84ff; }
+    .ptr.ready { color: #32d74b; }
+  }
+
+  /* ============ Aviso de lançamento suspeito ============ */
+  .row-warn {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ios-orange);
+    letter-spacing: -0.1px;
+  }
+
+  /* ============ Search input no sheet ============ */
+  .sheet-search {
+    width: 100%;
+    margin: 4px 0 8px;
+    padding: 10px 14px;
+    background: rgba(120,120,128,0.16);
+    border: 0.5px solid var(--hairline);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--fg);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .sheet-search::placeholder { color: var(--fg-subtle); }
+  .sheet-search:focus { outline: 2px solid rgba(0,122,255,0.4); outline-offset: 1px; }
+  @media (prefers-color-scheme: dark) {
+    .sheet-search { background: rgba(120,120,128,0.28); }
+  }
+  .sheet-empty {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--fg-subtle);
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  /* ============ Drill-down do saldo + share ============ */
+  .balance-tap-hint {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 0.5px solid rgba(255,255,255,0.18);
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    letter-spacing: -0.1px;
+  }
+  .saldo-section {
+    margin-bottom: 8px;
+  }
+  .saldo-rows {
+    background: rgba(120,120,128,0.08);
+    border-radius: 14px;
+    padding: 4px 14px;
+    margin-bottom: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .saldo-rows { background: rgba(120,120,128,0.16); }
+  }
+  .saldo-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 12px 0;
+  }
+  .saldo-row + .saldo-row { border-top: 0.5px solid var(--hairline); }
+  .saldo-name { font-size: 15px; font-weight: 600; }
+  .saldo-val {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .saldo-diff {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    min-width: 90px;
+    text-align: right;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .saldo-row-total .saldo-name { color: var(--fg-subtle); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.8px; }
+  .saldo-row-total .saldo-diff { color: var(--fg-subtle); font-weight: 600; }
+  .saldo-result {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(0,122,255,0.12), rgba(88,86,214,0.10));
+    border: 0.5px solid rgba(0,122,255,0.20);
+    border-radius: 12px;
+    font-size: 15px;
+    text-align: center;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .saldo-result.text-ok {
+    background: linear-gradient(135deg, rgba(52,199,89,0.12), rgba(48,209,88,0.10));
+    border-color: rgba(52,199,89,0.22);
+    color: var(--ios-green);
+    font-weight: 700;
+  }
+  .saldo-amount {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    .saldo-result {
+      background: linear-gradient(135deg, rgba(10,132,255,0.18), rgba(94,92,230,0.14));
+      border-color: rgba(10,132,255,0.28);
+    }
+  }
+
+  /* Botões de compartilhar/copiar */
+  .share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 18px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: -0.1px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 120ms ease, opacity 160ms ease;
+  }
+  .share-btn:active { transform: scale(0.98); opacity: 0.92; }
+  .share-btn-icon { font-size: 18px; }
+  .share-btn-secondary {
+    margin-top: 8px;
+    background: rgba(120,120,128,0.16);
+    color: var(--ios-blue);
+    box-shadow: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    .share-btn-secondary { background: rgba(120,120,128,0.28); color: #0a84ff; }
+  }
+  .copy-feedback {
+    text-align: center;
+    margin-top: 10px;
+    min-height: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: transparent;
+    transition: color 200ms ease;
+  }
+  .copy-feedback.ok  { color: var(--ios-green); }
+  .copy-feedback.err { color: var(--ios-red); }
+
   /* Fallback: navegadores sem backdrop-filter ganham fundo sólido legível */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .card { background: var(--glass-bg-strong); }
@@ -1051,8 +1257,13 @@
 
 <header>
   <h1>Gastos</h1>
-  <span class="month" id="currentMonth">—</span>
+  <div class="header-meta">
+    <span class="month" id="currentMonth">—</span>
+    <span class="freshness" id="freshness"></span>
+  </div>
 </header>
+
+<div id="ptr" class="ptr"><span id="ptrLabel">↓ Puxe pra atualizar</span></div>
 
 <div id="content">
   <div class="loader"><div class="spinner"></div></div>
@@ -1124,6 +1335,12 @@ let viewDate = new Date();
 // Cache do mês renderizado (rows + total) — usado pelos sheets de drill-down.
 let currentRows = [];
 let currentTotalGeral = 0;
+// Cache do saldo entre os dois (calculado em render) — usado pelo drill-down e pelo share.
+let currentSaldoInfo = null;
+// Timestamp do último fetch bem-sucedido — usado pra mostrar "atualizado há X min".
+let lastFetchAt = null;
+// Map<rowIndex, motivo> de lançamentos suspeitos no mês corrente.
+let currentSuspeitos = new Map();
 
 function stripAccents(s) {
   return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1164,6 +1381,58 @@ function projAporteMensal(pmt, anos) {
   return pmt * (Math.pow(1 + TAXA_MENSAL, meses) - 1) / TAXA_MENSAL;
 }
 
+/* Detecta lançamentos suspeitos no mês. Retorna Map<rowKey, motivo>.
+   - Duplicata: mesma descrição+valor num intervalo ≤ 2 dias (típico de webhook duplicado)
+   - Outlier: valor > 3× a média da categoria (só se a categoria tem ≥ 3 lançamentos) */
+function detectSuspeitos(rows) {
+  const motivos = new Map();
+  if (!rows || rows.length === 0) return motivos;
+
+  // 1) Duplicatas
+  const byKey = {};
+  rows.forEach((r, i) => {
+    const desc = (r['descrição'] || r.descricao || '').toLowerCase().trim();
+    const val = parseValor(r.valor);
+    const k = desc + '|' + val.toFixed(2);
+    const dataKey = parseDataKey(r.data);
+    if (!byKey[k]) byKey[k] = [];
+    byKey[k].push({ idx: i, dataKey, row: r });
+  });
+  Object.values(byKey).forEach(group => {
+    if (group.length < 2) return;
+    group.sort((a, b) => a.dataKey - b.dataKey);
+    for (let i = 1; i < group.length; i++) {
+      // dataKey é YYYYMMDD — diff de 2 = 2 dias adjacentes
+      const dy = group[i].dataKey - group[i - 1].dataKey;
+      if (dy <= 2) {
+        motivos.set(group[i].idx, 'Possível duplicata · mesmo valor e descrição em ' + group[i - 1].row.data);
+      }
+    }
+  });
+
+  // 2) Outliers por categoria
+  const byCat = {};
+  rows.forEach((r, i) => {
+    const cat = normalizeCat(r.categoria);
+    if (!byCat[cat]) byCat[cat] = [];
+    byCat[cat].push({ idx: i, val: parseValor(r.valor) });
+  });
+  Object.values(byCat).forEach(items => {
+    if (items.length < 3) return;
+    const media = items.reduce((s, x) => s + x.val, 0) / items.length;
+    if (media <= 0) return;
+    items.forEach(({ idx, val }) => {
+      if (val > media * 2.5) {
+        const existing = motivos.get(idx);
+        const msg = `Valor incomum · ${(val / media).toFixed(1)}× a média da categoria`;
+        motivos.set(idx, existing ? existing + ' · ' + msg : msg);
+      }
+    });
+  });
+
+  return motivos;
+}
+
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
@@ -1190,12 +1459,32 @@ async function load() {
     const res = await fetch(CSV_URL + '&t=' + Date.now());
     const text = await res.text();
     const rows = parseCSV(text);
+    lastFetchAt = Date.now();
     render(rows);
+    updateFreshness();
+    return true;
   } catch (e) {
     document.getElementById('content').innerHTML =
       '<div class="card empty"><div class="empty-icon">⚠️</div>Erro ao carregar dados</div>';
+    return false;
   }
 }
+
+// Indicador "atualizado há X" — atualiza o spam #freshness no header.
+function updateFreshness() {
+  const el = document.getElementById('freshness');
+  if (!el || !lastFetchAt) return;
+  const seconds = Math.floor((Date.now() - lastFetchAt) / 1000);
+  let label;
+  if (seconds < 30) label = 'agora';
+  else if (seconds < 90) label = 'há 1 min';
+  else if (seconds < 3600) label = 'há ' + Math.floor(seconds / 60) + ' min';
+  else if (seconds < 7200) label = 'há 1 h';
+  else label = 'há ' + Math.floor(seconds / 3600) + ' h';
+  el.textContent = '· atualizado ' + label;
+}
+// Refresca o label periodicamente sem hit em rede.
+setInterval(updateFreshness, 30000);
 
 // Total dos fixos (constante, mas vira função pra deixar fácil somar futuro).
 function totalFixos() {
@@ -1399,21 +1688,36 @@ function render(allRows) {
     porCategoria[cat] = (porCategoria[cat] || 0) + v;
   });
 
-  // Saldo
+  // Detecta suspeitos uma vez aqui e cacheia (sheets reutilizam).
+  currentSuspeitos = detectSuspeitos(rows);
+
+  // Saldo — cacheia info pro drill-down e o share.
   const pessoas = Object.keys(porPessoa);
   let saldoHTML = '';
+  let balanceTappable = false;
+  currentSaldoInfo = null;
   if (pessoas.length === 2) {
     const [a, b] = pessoas;
     const diff = porPessoa[a] - porPessoa[b];
     const metade = Math.abs(diff) / 2;
-    if (Math.abs(diff) < 0.01) {
+    const quitado = Math.abs(diff) < 0.01;
+    const credor = quitado ? null : (diff > 0 ? a : b);
+    const devedor = quitado ? null : (diff > 0 ? b : a);
+    currentSaldoInfo = {
+      a, b,
+      pagouA: porPessoa[a], pagouB: porPessoa[b],
+      total: totalGeral,
+      metadeJusta: totalGeral / 2,
+      quitado, credor, devedor,
+      saldo: metade
+    };
+    balanceTappable = true;
+    if (quitado) {
       saldoHTML = `
         <div class="balance-label">Saldo</div>
         <div class="balance-value">Quitado ✓</div>
         <div class="balance-detail">Vocês estão em dia</div>`;
     } else {
-      const credor = diff > 0 ? a : b;
-      const devedor = diff > 0 ? b : a;
       saldoHTML = `
         <div class="balance-label">Saldo</div>
         <div class="balance-value">${formatBRL(metade)}</div>
@@ -1425,6 +1729,8 @@ function render(allRows) {
       <div class="balance-value">${formatBRL(totalGeral)}</div>
       <div class="balance-detail">${rows.length} lançamentos</div>`;
   }
+  const balanceClass = balanceTappable ? 'card balance-card tappable' : 'card balance-card';
+  const balanceClick = balanceTappable ? 'onclick="openSaldoSheet()"' : '';
 
   // Categorias — categorias com budget mostram gasto/teto, %, sobra, e cor por faixa.
   // Sort: primeiro maiores gastos (com ou sem budget); empatadas em 0 ficam por último.
@@ -1489,16 +1795,24 @@ function render(allRows) {
   }).join('');
 
   // Últimos lançamentos — preview dos 8 mais recentes; "ver todos" só aparece quando há mais.
-  const ultimos = rows.slice(-8).reverse();
-  const ultimosHTML = ultimos.map(r => {
+  // Pega os 8 últimos por índice em rows e inverte (mais recente em cima).
+  const startIdx = Math.max(0, rows.length - 8);
+  const ultimos = [];
+  for (let i = rows.length - 1; i >= startIdx; i--) ultimos.push({ r: rows[i], idx: i });
+  const ultimosHTML = ultimos.map(({ r, idx }) => {
     const v = parseFloat(r.valor.replace(',', '.')) || 0;
     const cat = normalizeCat(r.categoria);
+    const suspMotivo = currentSuspeitos.get(idx);
+    const warnHTML = suspMotivo
+      ? `<div class="row-warn">⚠︎ ${suspMotivo}</div>`
+      : '';
     return `
       <div class="transaction-row">
         <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
         <div class="row-info">
           <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
           <div class="row-sub">${r.data} · ${cap(r.quem_pagou)}</div>
+          ${warnHTML}
         </div>
         <div class="row-value">${formatBRL(v)}</div>
       </div>`;
@@ -1508,7 +1822,7 @@ function render(allRows) {
     : '';
 
   document.getElementById('content').innerHTML = `
-    <div class="card balance-card">${saldoHTML}</div>
+    <div class="${balanceClass}" ${balanceClick}>${saldoHTML}${balanceTappable ? '<div class="balance-tap-hint">Tap pra ver detalhes e compartilhar →</div>' : ''}</div>
 
     <div class="section-title">Fixos do mês</div>
     ${renderFixos()}
@@ -1580,12 +1894,16 @@ function sheetKeydown(e) {
 
 // --- Drill-down 1: lançamentos de uma categoria do mês atual ---
 function openCatSheet(cat) {
-  const list = currentRows.filter(r => normalizeCat(r.categoria) === cat);
+  // Mantém o índice original em currentRows pra cruzar com currentSuspeitos.
+  const list = [];
+  currentRows.forEach((r, i) => {
+    if (normalizeCat(r.categoria) === cat) list.push({ r, idx: i });
+  });
   if (list.length === 0) return;
 
-  const total = list.reduce((s, r) => s + parseValor(r.valor), 0);
+  const total = list.reduce((s, x) => s + parseValor(x.r.valor), 0);
   const teto = BUDGET_CATEGORIA[cat];
-  const sorted = list.slice().sort((a, b) => parseDataKey(b.data) - parseDataKey(a.data));
+  const sorted = list.slice().sort((a, b) => parseDataKey(b.r.data) - parseDataKey(a.r.data));
 
   const tetoStat = teto != null ? `
     <div class="sheet-stat">
@@ -1606,14 +1924,19 @@ function openCatSheet(cat) {
       ${tetoStat}
     </div>`;
 
-  const rowsHTML = sorted.map(r => `
-    <div class="transaction-row">
-      <div class="row-info">
-        <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
-        <div class="row-sub">${r.data} · ${cap(r.quem_pagou)}</div>
-      </div>
-      <div class="row-value">${formatBRL(parseValor(r.valor))}</div>
-    </div>`).join('');
+  const rowsHTML = sorted.map(({ r, idx }) => {
+    const motivo = currentSuspeitos.get(idx);
+    const warnHTML = motivo ? `<div class="row-warn">⚠︎ ${motivo}</div>` : '';
+    return `
+      <div class="transaction-row">
+        <div class="row-info">
+          <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
+          <div class="row-sub">${r.data} · ${cap(r.quem_pagou)}</div>
+          ${warnHTML}
+        </div>
+        <div class="row-value">${formatBRL(parseValor(r.valor))}</div>
+      </div>`;
+  }).join('');
 
   const titleHTML = `
     <span class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</span>
@@ -1622,23 +1945,10 @@ function openCatSheet(cat) {
   openSheet(titleHTML, stats + rowsHTML);
 }
 
-// --- Drill-down 2: todos os lançamentos do mês, agrupados por dia ---
+// --- Drill-down 2: todos os lançamentos do mês, agrupados por dia + busca ---
 function openAllSheet() {
   if (currentRows.length === 0) return;
   const total = currentRows.reduce((s, r) => s + parseValor(r.valor), 0);
-  const sorted = currentRows.slice().sort((a, b) => parseDataKey(b.data) - parseDataKey(a.data));
-
-  // Agrupa por data preservando a ordem do sort.
-  const byDay = [];
-  const dayMap = {};
-  sorted.forEach(r => {
-    if (!dayMap[r.data]) {
-      const arr = [];
-      dayMap[r.data] = arr;
-      byDay.push([r.data, arr]);
-    }
-    dayMap[r.data].push(r);
-  });
 
   const stats = `
     <div class="sheet-stats">
@@ -1650,18 +1960,62 @@ function openAllSheet() {
         <div class="sheet-stat-label">Lançamentos</div>
         <div class="sheet-stat-value">${currentRows.length}</div>
       </div>
-    </div>`;
+    </div>
+    <input
+      type="search"
+      class="sheet-search"
+      id="allSheetSearch"
+      placeholder="Buscar por descrição…"
+      oninput="filterAllSheet(this.value)"
+      autocomplete="off"
+      autocapitalize="off"
+      autocorrect="off"
+      spellcheck="false">
+    <div id="allSheetList">${renderAllList('')}</div>`;
 
-  const groupsHTML = byDay.map(([data, items]) => {
-    const dayTotal = items.reduce((s, r) => s + parseValor(r.valor), 0);
-    const itemsHTML = items.map(r => {
+  openSheet('Todos os lançamentos', stats);
+}
+
+// Helper: monta lista agrupada por dia, opcionalmente filtrada por descrição.
+function renderAllList(query) {
+  const q = (query || '').trim().toLowerCase();
+  const items = [];
+  currentRows.forEach((r, i) => {
+    if (q) {
+      const desc = (r['descrição'] || r.descricao || '').toLowerCase();
+      if (!desc.includes(q)) return;
+    }
+    items.push({ r, idx: i });
+  });
+  if (items.length === 0) {
+    return `<div class="sheet-empty">Nenhum lançamento encontrado.</div>`;
+  }
+  items.sort((a, b) => parseDataKey(b.r.data) - parseDataKey(a.r.data));
+
+  const byDay = [];
+  const dayMap = {};
+  items.forEach(it => {
+    if (!dayMap[it.r.data]) {
+      const arr = [];
+      dayMap[it.r.data] = arr;
+      byDay.push([it.r.data, arr]);
+    }
+    dayMap[it.r.data].push(it);
+  });
+
+  return byDay.map(([data, group]) => {
+    const dayTotal = group.reduce((s, x) => s + parseValor(x.r.valor), 0);
+    const itemsHTML = group.map(({ r, idx }) => {
       const cat = normalizeCat(r.categoria);
+      const motivo = currentSuspeitos.get(idx);
+      const warnHTML = motivo ? `<div class="row-warn">⚠︎ ${motivo}</div>` : '';
       return `
         <div class="transaction-row">
           <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
           <div class="row-info">
             <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
             <div class="row-sub">${cap(r.quem_pagou)} · ${cap(cat)}</div>
+            ${warnHTML}
           </div>
           <div class="row-value">${formatBRL(parseValor(r.valor))}</div>
         </div>`;
@@ -1673,8 +2027,147 @@ function openAllSheet() {
       </div>
       ${itemsHTML}`;
   }).join('');
+}
 
-  openSheet('Todos os lançamentos', stats + groupsHTML);
+// Search no sheet de todos — chamada por oninput no input.
+function filterAllSheet(query) {
+  const list = document.getElementById('allSheetList');
+  if (list) list.innerHTML = renderAllList(query);
+}
+
+// --- Drill-down 4: detalhes do saldo entre os dois + compartilhar ---
+function openSaldoSheet() {
+  if (!currentSaldoInfo) return;
+  const s = currentSaldoInfo;
+  const fixosTot = totalFixos();
+  const aliceFixos = fixosTot * PERCENTUAL_ALICE;
+  const monthLabel = `${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+
+  const linhaPagamento = (nome, valor, justa) => {
+    const diff = valor - justa;
+    const tag = Math.abs(diff) < 0.01
+      ? `<span class="saldo-diff text-ok">no ponto</span>`
+      : (diff > 0
+        ? `<span class="saldo-diff text-ok">+${formatBRL(diff)}</span>`
+        : `<span class="saldo-diff text-over">${formatBRL(diff)}</span>`);
+    return `
+      <div class="saldo-row">
+        <div class="saldo-name">${cap(nome)}</div>
+        <div class="saldo-val">${formatBRL(valor)}</div>
+        ${tag}
+      </div>`;
+  };
+
+  const acertoHTML = s.quitado
+    ? `<div class="saldo-result text-ok">✓ Quitado · ninguém deve nada</div>`
+    : `<div class="saldo-result">
+         <strong>${cap(s.devedor)}</strong> paga <strong class="saldo-amount">${formatBRL(s.saldo)}</strong> ao <strong>${cap(s.credor)}</strong>
+       </div>`;
+
+  const html = `
+    <div class="saldo-section">
+      <div class="proj-section-title">Variáveis · divisão 50/50</div>
+      <div class="saldo-rows">
+        ${linhaPagamento(s.a, s.pagouA, s.metadeJusta)}
+        ${linhaPagamento(s.b, s.pagouB, s.metadeJusta)}
+        <div class="saldo-row saldo-row-total">
+          <div class="saldo-name">Total</div>
+          <div class="saldo-val">${formatBRL(s.total)}</div>
+          <span class="saldo-diff">cada um devia: ${formatBRL(s.metadeJusta)}</span>
+        </div>
+      </div>
+      ${acertoHTML}
+    </div>
+
+    <div class="saldo-section">
+      <div class="proj-section-title">Fixos · Alice paga 35%</div>
+      <div class="saldo-rows">
+        <div class="saldo-row">
+          <div class="saldo-name">Total fixos</div>
+          <div class="saldo-val">${formatBRL(fixosTot)}</div>
+        </div>
+        <div class="saldo-row">
+          <div class="saldo-name">Alice (35%)</div>
+          <div class="saldo-val text-ok"><strong>${formatBRL(aliceFixos)}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="share-btn" onclick="shareWhatsApp()">
+      <span class="share-btn-icon">💬</span>
+      <span>Mandar pra Alice no WhatsApp</span>
+    </button>
+    <button class="share-btn share-btn-secondary" onclick="copyToClipboard()">
+      <span>Copiar texto</span>
+    </button>
+    <div id="copyFeedback" class="copy-feedback"></div>
+  `;
+
+  openSheet(`Saldo de ${monthLabel}`, html);
+}
+
+// Monta o texto pronto pra mandar no WhatsApp.
+function buildShareText() {
+  if (!currentSaldoInfo) return '';
+  const s = currentSaldoInfo;
+  const fixosTot = totalFixos();
+  const aliceFixos = fixosTot * PERCENTUAL_ALICE;
+  const monthLabel = `${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+
+  const linhaSaldo = s.quitado
+    ? '✅ Saldo quitado — ninguém deve nada'
+    : `🤝 Saldo: ${cap(s.devedor)} paga *${formatBRL(s.saldo)}* ao ${cap(s.credor)}`;
+
+  return [
+    `💸 *Resumo de ${monthLabel}*`,
+    '',
+    '*Variáveis* (50/50)',
+    `• ${cap(s.a)}: ${formatBRL(s.pagouA)}`,
+    `• ${cap(s.b)}: ${formatBRL(s.pagouB)}`,
+    `• Total: ${formatBRL(s.total)}`,
+    '',
+    linhaSaldo,
+    '',
+    '*Fixos* (Alice 35%)',
+    `• Total: ${formatBRL(fixosTot)}`,
+    `• Alice deve: *${formatBRL(aliceFixos)}*`
+  ].join('\n');
+}
+
+// Abre WhatsApp (web ou app) com o texto pronto. wa.me funciona em iOS/Android/desktop.
+function shareWhatsApp() {
+  const text = buildShareText();
+  if (!text) return;
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+// Fallback: copia o texto pra área de transferência.
+function copyToClipboard() {
+  const text = buildShareText();
+  if (!text) return;
+  const fb = document.getElementById('copyFeedback');
+  const showFeedback = (msg, ok) => {
+    if (!fb) return;
+    fb.textContent = msg;
+    fb.className = 'copy-feedback ' + (ok ? 'ok' : 'err');
+    setTimeout(() => { fb.className = 'copy-feedback'; }, 1800);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => showFeedback('✓ Copiado', true),
+      () => showFeedback('Falha ao copiar', false)
+    );
+  } else {
+    // Fallback antigo
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showFeedback('✓ Copiado', true); }
+    catch { showFeedback('Falha ao copiar', false); }
+    document.body.removeChild(ta);
+  }
 }
 
 // --- Drill-down 3: projeção de investimento (5/10 anos, único + mensal) ---
@@ -1750,16 +2243,82 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) load();
 });
 
-// Aurora parallax — atualiza CSS var --scroll-y em rAF.
-// Os transforms estão no CSS (.aurora-1/2/3); aqui só passamos o scroll atual.
+// PWA — registra service worker (cache offline + abertura instantânea).
+// Path relativo funciona com GitHub Pages tanto em user.github.io/ quanto user.github.io/repo/.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => { /* silenciar — funciona sem */ });
+  });
+}
+
+// Pull-to-refresh — só ativa quando o scroll está no topo.
+(function setupPullToRefresh() {
+  const ptr = document.getElementById('ptr');
+  const label = document.getElementById('ptrLabel');
+  if (!ptr || !label) return;
+  const threshold = 80; // px que o usuário precisa puxar
+  let startY = 0, currentY = 0, pulling = false, refreshing = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (refreshing) return;
+    if (window.scrollY > 4) return; // só perto do topo
+    startY = e.touches[0].clientY;
+    currentY = startY;
+    pulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling || refreshing) return;
+    currentY = e.touches[0].clientY;
+    const dy = currentY - startY;
+    if (dy <= 0) { ptr.classList.remove('show', 'ready'); return; }
+    if (dy >= threshold) {
+      ptr.classList.add('show', 'ready');
+      label.textContent = '↑ Solte pra atualizar';
+    } else {
+      ptr.classList.add('show');
+      ptr.classList.remove('ready');
+      label.textContent = '↓ Puxe pra atualizar';
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    const dy = currentY - startY;
+    if (dy >= threshold) {
+      refreshing = true;
+      ptr.classList.add('refreshing');
+      label.textContent = '⟳ Atualizando…';
+      load().finally(() => {
+        setTimeout(() => {
+          ptr.classList.remove('show', 'ready', 'refreshing');
+          refreshing = false;
+        }, 300);
+      });
+    } else {
+      ptr.classList.remove('show', 'ready');
+    }
+  }, { passive: true });
+})();
+
+// Aurora parallax + cor dinâmica.
+// - Posição: CSS var --scroll-y → translate3d nas layers (CSS)
+// - Cor: hue-rotate aplicado direto no .aurora via JS (iOS Safari não interpola
+//   calc(var() * deg) dentro de filter de forma confiável)
 (function setupAuroraParallax() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) return; // CSS já zera o transform, só evitamos o listener
+  if (reduced) return;
   const root = document.documentElement;
+  const aurora = document.querySelector('.aurora');
   let lastY = 0;
   let ticking = false;
   function tick() {
     root.style.setProperty('--scroll-y', lastY);
+    if (aurora) {
+      // 0.06°/px → 600px de scroll = 36° de hue rotation
+      aurora.style.filter = 'hue-rotate(' + (lastY * 0.06).toFixed(1) + 'deg)';
+    }
     ticking = false;
   }
   window.addEventListener('scroll', () => {
