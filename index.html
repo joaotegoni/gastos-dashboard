@@ -723,10 +723,322 @@
     letter-spacing: 0.4px;
   }
 
+  /* ============ Tappable rows / cards (drill-down) ============ */
+  .tappable {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 160ms ease, transform 120ms ease;
+  }
+  .tappable:active { opacity: 0.55; transform: scale(0.995); }
+  .row-chev {
+    margin-left: 8px;
+    font-size: 20px;
+    color: var(--fg-subtle);
+    font-weight: 300;
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 0.55;
+    align-self: center;
+  }
+  .invest-tap-hint {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 0.5px solid var(--hairline);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ios-blue);
+    text-align: center;
+    letter-spacing: -0.1px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .invest-tap-hint { color: #0a84ff; }
+  }
+  .see-all-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 0 4px;
+    margin-top: 8px;
+    border-top: 0.5px solid var(--hairline);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ios-blue);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: -0.1px;
+    transition: opacity 160ms ease;
+  }
+  .see-all-row:active { opacity: 0.5; }
+  @media (prefers-color-scheme: dark) {
+    .see-all-row { color: #0a84ff; }
+  }
+
+  /* ============ Bottom Sheet ============ */
+  body.sheet-locked { overflow: hidden; }
+
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .sheet.open { pointer-events: auto; visibility: visible; }
+
+  .sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    backdrop-filter: blur(8px) saturate(140%);
+  }
+  .sheet.open .sheet-backdrop { opacity: 1; }
+
+  .sheet-container {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    max-height: 88vh;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border: 0.5px solid var(--glass-border);
+    border-bottom: none;
+    box-shadow:
+      0 -8px 40px -8px rgba(0,0,0,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.6);
+    transform: translateY(100%);
+    transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    .sheet-container {
+      box-shadow:
+        0 -8px 40px -8px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.10);
+    }
+  }
+  .sheet.open .sheet-container { transform: translateY(0); }
+
+  .sheet-grabber {
+    width: 36px;
+    height: 5px;
+    background: rgba(120,120,128,0.45);
+    border-radius: 999px;
+    margin: 8px auto 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 20px 14px;
+    border-bottom: 0.5px solid var(--hairline);
+    flex-shrink: 0;
+  }
+  .sheet-title {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .sheet-title .cat-icon {
+    width: 28px; height: 28px;
+    font-size: 14px;
+    border-radius: 8px;
+    margin-right: 0;
+    flex-shrink: 0;
+  }
+  .sheet-close {
+    background: rgba(120,120,128,0.20);
+    border: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fg-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    flex-shrink: 0;
+    transition: transform 120ms ease, background 160ms ease;
+  }
+  .sheet-close:active { transform: scale(0.92); background: rgba(120,120,128,0.30); }
+
+  .sheet-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 20px calc(env(safe-area-inset-bottom) + 28px);
+    flex: 1;
+  }
+
+  .sheet-stats {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0 16px;
+    border-bottom: 0.5px solid var(--hairline);
+    margin-bottom: 4px;
+  }
+  .sheet-stat { flex: 1; min-width: 0; }
+  .sheet-stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--fg-subtle);
+    margin-bottom: 4px;
+  }
+  .sheet-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  .sheet-day-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--fg-subtle);
+    padding: 18px 0 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .sheet-day-header .day-total {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fg-muted);
+    letter-spacing: -0.1px;
+    text-transform: none;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  /* ============ Projeção de investimento ============ */
+  .proj-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    padding: 18px 0 10px;
+  }
+  .proj-section-title--mt { padding-top: 26px; }
+  .proj-card {
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: rgba(120,120,128,0.08);
+    margin-bottom: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .proj-card { background: rgba(120,120,128,0.16); }
+  }
+  .proj-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ios-blue);
+  }
+  @media (prefers-color-scheme: dark) {
+    .proj-title { color: #0a84ff; }
+  }
+  .proj-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-subtle);
+    margin-top: 2px;
+  }
+  .proj-final {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-top: 8px;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .proj-bar {
+    display: flex;
+    height: 10px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .proj-bar { background: rgba(120,120,128,0.32); }
+  }
+  .proj-aporte {
+    background: linear-gradient(135deg, var(--ios-gray), #aeaeb2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+    border-top-left-radius: 999px;
+    border-bottom-left-radius: 999px;
+  }
+  .proj-juros {
+    background: linear-gradient(135deg, #34c759, #30d158);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+    border-top-right-radius: 999px;
+    border-bottom-right-radius: 999px;
+  }
+  .proj-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--fg-subtle);
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+  .proj-legend strong {
+    color: var(--fg);
+    font-weight: 700;
+    margin-left: 4px;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+  .proj-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .proj-dot-aporte { background: var(--ios-gray); }
+  .proj-dot-juros  { background: var(--ios-green); }
+  .proj-disclaimer {
+    margin-top: 22px;
+    padding: 14px 16px;
+    background: rgba(120,120,128,0.08);
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--fg-subtle);
+    font-weight: 500;
+  }
+  @media (prefers-color-scheme: dark) {
+    .proj-disclaimer { background: rgba(120,120,128,0.16); }
+  }
+
   /* Fallback: navegadores sem backdrop-filter ganham fundo sólido legível */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .card { background: var(--glass-bg-strong); }
     .controls { background: var(--glass-bg-strong); }
+    .sheet-container { background: var(--glass-bg-strong); }
   }
 </style>
 </head>
@@ -752,6 +1064,18 @@
   <button class="btn" onclick="changeMonth(1)">Próximo →</button>
 </div>
 
+<div id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-backdrop" onclick="closeSheet()"></div>
+  <div class="sheet-container">
+    <div class="sheet-grabber" onclick="closeSheet()" aria-label="Fechar"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="sheetTitle"></div>
+      <button class="sheet-close" onclick="closeSheet()" aria-label="Fechar">×</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjUDtVlV6jvtmv4fH5vxWF582v-lMFgjTTrsN8OtEChleTXwIV71X1H_VuGuddNenA5sD37nK_gA-y/pub?gid=0&single=true&output=csv';
 
@@ -760,6 +1084,10 @@ const PERCENTUAL_ALICE = 0.35;
 
 // Meta de poupança/investimento mensal (regra 50/30/20 sugere 20% da renda).
 const META_POUPANCA = 2600;
+
+// Projeção de investimento: taxa efetiva anual e mensal equivalente (composto).
+const TAXA_ANUAL = 0.10;
+const TAXA_MENSAL = Math.pow(1 + TAXA_ANUAL, 1 / 12) - 1; // ≈ 0,7974%
 
 // Buckets da regra 50/30/20. "moradia" entra em essenciais (apesar de já estar em FIXOS);
 // como fixos vão direto pro bucket essenciais, "moradia" aqui só é defensivo
@@ -793,6 +1121,9 @@ const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 let viewDate = new Date();
+// Cache do mês renderizado (rows + total) — usado pelos sheets de drill-down.
+let currentRows = [];
+let currentTotalGeral = 0;
 
 function stripAccents(s) {
   return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -807,6 +1138,30 @@ function statusClass(pct) {
   if (pct < 70) return 'ok';
   if (pct < 90) return 'warn';
   return 'over';
+}
+
+// Converte "DD/MM/YYYY" em chave numérica YYYYMMDD pra ordenação.
+function parseDataKey(d) {
+  const parts = (d || '').split('/');
+  if (parts.length !== 3) return 0;
+  return (parseInt(parts[2], 10) * 10000)
+       + (parseInt(parts[1], 10) * 100)
+       + parseInt(parts[0], 10);
+}
+
+// Lê o valor do CSV em número (vírgula decimal).
+function parseValor(v) {
+  return parseFloat((v || '').replace(',', '.')) || 0;
+}
+
+// Juros compostos — aporte único: FV = P × (1 + r)^n
+function projAporteUnico(valor, anos) {
+  return valor * Math.pow(1 + TAXA_ANUAL, anos);
+}
+// Anuidade ordinária — aporte mensal: FV = PMT × ((1 + i)^n − 1) / i
+function projAporteMensal(pmt, anos) {
+  const meses = anos * 12;
+  return pmt * (Math.pow(1 + TAXA_MENSAL, meses) - 1) / TAXA_MENSAL;
 }
 
 function parseCSV(text) {
@@ -897,7 +1252,7 @@ function renderInvestimento(totalVariavel) {
   }
 
   return `
-    <div class="card invest-card">
+    <div class="card invest-card tappable" onclick="openInvestSheet()" role="button" tabindex="0">
       <div class="invest-header">
         <div class="stat-label">Pode investir este mês</div>
         <div class="invest-icon" aria-hidden="true">🪙</div>
@@ -905,6 +1260,7 @@ function renderInvestimento(totalVariavel) {
       <div class="invest-value">${formatBRL(podeInvestir)}</div>
       <div class="invest-bar"><div class="invest-fill bar-${cls}" style="width:${pctBar}%"></div></div>
       <div class="invest-sub">${label}</div>
+      <div class="invest-tap-hint">Tap pra ver projeção em 5 e 10 anos →</div>
     </div>`;
 }
 
@@ -1008,6 +1364,8 @@ function render(allRows) {
 
   // Mês vazio: mostra fixos, renda, investimento e mix mesmo sem lançamentos.
   if (rows.length === 0) {
+    currentRows = [];
+    currentTotalGeral = 0;
     document.getElementById('content').innerHTML = `
       <div class="card empty"><div class="empty-icon">📭</div>Nenhum gasto neste mês</div>
 
@@ -1070,9 +1428,16 @@ function render(allRows) {
 
   // Categorias — categorias com budget mostram gasto/teto, %, sobra, e cor por faixa.
   // Sort: primeiro maiores gastos (com ou sem budget); empatadas em 0 ficam por último.
+  // Cada linha é tappable e abre sheet com os lançamentos da categoria (Feature 1).
   const catSorted = Object.entries(porCategoria).sort((a,b) => b[1] - a[1]);
   const catHTML = catSorted.map(([cat, val]) => {
     const teto = BUDGET_CATEGORIA[cat];
+    // Sem lançamentos no mês: linha não-clicável (não tem o que mostrar no sheet).
+    const isTappable = val > 0;
+    const tapAttrs = isTappable
+      ? `class="category-row tappable" onclick="openCatSheet('${cat}')"`
+      : `class="category-row"`;
+    const chev = isTappable ? `<span class="row-chev">›</span>` : '';
     if (teto != null) {
       const pctReal = (val / teto) * 100;
       const pctBar = Math.min(100, pctReal);
@@ -1083,7 +1448,7 @@ function render(allRows) {
         : `${formatBRL(-sobra)} acima do teto`;
       const subCls = sobra >= 0 ? `text-${cls}` : 'text-over';
       return `
-        <div class="category-row">
+        <div ${tapAttrs}>
           <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
           <div class="row-info">
             <div class="row-title">${cat}</div>
@@ -1094,18 +1459,20 @@ function render(allRows) {
             <div class="row-value">${formatBRL(val)}</div>
             <div class="teto">de ${formatBRL(teto)}</div>
           </div>
+          ${chev}
         </div>`;
     }
     // Sem budget — comportamento original (barra proporcional ao total do mês).
     const pct = totalGeral > 0 ? (val / totalGeral) * 100 : 0;
     return `
-      <div class="category-row">
+      <div ${tapAttrs}>
         <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
         <div class="row-info">
           <div class="row-title">${cat}</div>
           <div class="progress-bar"><div class="progress-fill cat-${cat}" style="width:${pct}%"></div></div>
         </div>
         <div class="row-value">${formatBRL(val)}</div>
+        ${chev}
       </div>`;
   }).join('');
 
@@ -1121,7 +1488,7 @@ function render(allRows) {
       </div>`;
   }).join('');
 
-  // Últimos lançamentos
+  // Últimos lançamentos — preview dos 8 mais recentes; "ver todos" só aparece quando há mais.
   const ultimos = rows.slice(-8).reverse();
   const ultimosHTML = ultimos.map(r => {
     const v = parseFloat(r.valor.replace(',', '.')) || 0;
@@ -1136,6 +1503,9 @@ function render(allRows) {
         <div class="row-value">${formatBRL(v)}</div>
       </div>`;
   }).join('');
+  const seeAllHTML = rows.length > 8
+    ? `<div class="see-all-row" onclick="openAllSheet()">Ver todos os ${rows.length} lançamentos →</div>`
+    : '';
 
   document.getElementById('content').innerHTML = `
     <div class="card balance-card">${saldoHTML}</div>
@@ -1170,13 +1540,197 @@ function render(allRows) {
     <div class="card">${catHTML}</div>
 
     <div class="section-title">Últimos lançamentos</div>
-    <div class="card">${ultimosHTML}</div>
+    <div class="card">${ultimosHTML}${seeAllHTML}</div>
   `;
+
+  // Cacheia rows e total pra os sheets de drill-down.
+  currentRows = rows;
+  currentTotalGeral = totalGeral;
 }
 
 function cap(s) {
   if (!s) return '';
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+/* ============================================================
+   Bottom Sheet — abertura/fechamento e 3 handlers de drill-down.
+   ============================================================ */
+
+function openSheet(titleHTML, bodyHTML) {
+  const sheet = document.getElementById('sheet');
+  document.getElementById('sheetTitle').innerHTML = titleHTML;
+  const body = document.getElementById('sheetBody');
+  body.innerHTML = bodyHTML;
+  body.scrollTop = 0;
+  sheet.classList.add('open');
+  document.body.classList.add('sheet-locked');
+  document.addEventListener('keydown', sheetKeydown);
+}
+
+function closeSheet() {
+  document.getElementById('sheet').classList.remove('open');
+  document.body.classList.remove('sheet-locked');
+  document.removeEventListener('keydown', sheetKeydown);
+}
+
+function sheetKeydown(e) {
+  if (e.key === 'Escape') closeSheet();
+}
+
+// --- Drill-down 1: lançamentos de uma categoria do mês atual ---
+function openCatSheet(cat) {
+  const list = currentRows.filter(r => normalizeCat(r.categoria) === cat);
+  if (list.length === 0) return;
+
+  const total = list.reduce((s, r) => s + parseValor(r.valor), 0);
+  const teto = BUDGET_CATEGORIA[cat];
+  const sorted = list.slice().sort((a, b) => parseDataKey(b.data) - parseDataKey(a.data));
+
+  const tetoStat = teto != null ? `
+    <div class="sheet-stat">
+      <div class="sheet-stat-label">Teto</div>
+      <div class="sheet-stat-value">${formatBRL(teto)}</div>
+    </div>` : '';
+
+  const stats = `
+    <div class="sheet-stats">
+      <div class="sheet-stat">
+        <div class="sheet-stat-label">Total</div>
+        <div class="sheet-stat-value">${formatBRL(total)}</div>
+      </div>
+      <div class="sheet-stat">
+        <div class="sheet-stat-label">Lançamentos</div>
+        <div class="sheet-stat-value">${list.length}</div>
+      </div>
+      ${tetoStat}
+    </div>`;
+
+  const rowsHTML = sorted.map(r => `
+    <div class="transaction-row">
+      <div class="row-info">
+        <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
+        <div class="row-sub">${r.data} · ${cap(r.quem_pagou)}</div>
+      </div>
+      <div class="row-value">${formatBRL(parseValor(r.valor))}</div>
+    </div>`).join('');
+
+  const titleHTML = `
+    <span class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</span>
+    <span style="text-transform:capitalize">${cat}</span>`;
+
+  openSheet(titleHTML, stats + rowsHTML);
+}
+
+// --- Drill-down 2: todos os lançamentos do mês, agrupados por dia ---
+function openAllSheet() {
+  if (currentRows.length === 0) return;
+  const total = currentRows.reduce((s, r) => s + parseValor(r.valor), 0);
+  const sorted = currentRows.slice().sort((a, b) => parseDataKey(b.data) - parseDataKey(a.data));
+
+  // Agrupa por data preservando a ordem do sort.
+  const byDay = [];
+  const dayMap = {};
+  sorted.forEach(r => {
+    if (!dayMap[r.data]) {
+      const arr = [];
+      dayMap[r.data] = arr;
+      byDay.push([r.data, arr]);
+    }
+    dayMap[r.data].push(r);
+  });
+
+  const stats = `
+    <div class="sheet-stats">
+      <div class="sheet-stat">
+        <div class="sheet-stat-label">Total</div>
+        <div class="sheet-stat-value">${formatBRL(total)}</div>
+      </div>
+      <div class="sheet-stat">
+        <div class="sheet-stat-label">Lançamentos</div>
+        <div class="sheet-stat-value">${currentRows.length}</div>
+      </div>
+    </div>`;
+
+  const groupsHTML = byDay.map(([data, items]) => {
+    const dayTotal = items.reduce((s, r) => s + parseValor(r.valor), 0);
+    const itemsHTML = items.map(r => {
+      const cat = normalizeCat(r.categoria);
+      return `
+        <div class="transaction-row">
+          <div class="cat-icon cat-${cat}">${CAT_ICONS[cat] || '📦'}</div>
+          <div class="row-info">
+            <div class="row-title">${r['descrição'] || r.descricao || '—'}</div>
+            <div class="row-sub">${cap(r.quem_pagou)} · ${cap(cat)}</div>
+          </div>
+          <div class="row-value">${formatBRL(parseValor(r.valor))}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="sheet-day-header">
+        <span>${data}</span>
+        <span class="day-total">${formatBRL(dayTotal)}</span>
+      </div>
+      ${itemsHTML}`;
+  }).join('');
+
+  openSheet('Todos os lançamentos', stats + groupsHTML);
+}
+
+// --- Drill-down 3: projeção de investimento (5/10 anos, único + mensal) ---
+function openInvestSheet() {
+  const sobra = RENDA_MENSAL - totalFixos() - currentTotalGeral;
+  const valor = Math.max(0, sobra);
+
+  if (valor === 0) {
+    openSheet('Projeção de investimento', `
+      <div class="empty" style="padding:48px 0">
+        <div class="empty-icon">💸</div>
+        Sem disponível este mês pra projetar.
+      </div>`);
+    return;
+  }
+
+  const cardProj = (titulo, sub, valorFinal, aportado) => {
+    const ganho = Math.max(0, valorFinal - aportado);
+    const pctJuros = valorFinal > 0 ? (ganho / valorFinal) * 100 : 0;
+    const pctAporte = 100 - pctJuros;
+    return `
+      <div class="proj-card">
+        <div class="proj-title">${titulo}</div>
+        <div class="proj-sub">${sub}</div>
+        <div class="proj-final">${formatBRL(valorFinal)}</div>
+        <div class="proj-bar">
+          <div class="proj-aporte" style="width:${pctAporte}%"></div>
+          <div class="proj-juros"  style="width:${pctJuros}%"></div>
+        </div>
+        <div class="proj-legend">
+          <div><span class="proj-dot proj-dot-aporte"></span>Aportado<strong>${formatBRL(aportado)}</strong></div>
+          <div><span class="proj-dot proj-dot-juros"></span>Juros<strong>${formatBRL(ganho)}</strong></div>
+        </div>
+      </div>`;
+  };
+
+  const u5  = projAporteUnico(valor, 5);
+  const u10 = projAporteUnico(valor, 10);
+  const m5  = projAporteMensal(valor, 5);
+  const m10 = projAporteMensal(valor, 10);
+
+  const html = `
+    <div class="proj-section-title">Aporte único · ${formatBRL(valor)} hoje, e esquece</div>
+    ${cardProj('Em 5 anos',  '60 meses rendendo',  u5,  valor)}
+    ${cardProj('Em 10 anos', '120 meses rendendo', u10, valor)}
+
+    <div class="proj-section-title proj-section-title--mt">Aporte mensal · ${formatBRL(valor)} todo mês</div>
+    ${cardProj('Em 5 anos',  '60 aportes mensais',  m5,  valor * 60)}
+    ${cardProj('Em 10 anos', '120 aportes mensais', m10, valor * 120)}
+
+    <div class="proj-disclaimer">
+      Cálculo a 10% ao ano (efetivo, juros compostos), sem considerar inflação ou imposto de renda. Realidade vai variar — Selic, IR sobre rendimentos, FIIs, etc.
+    </div>
+  `;
+
+  openSheet('Projeção de investimento', html);
 }
 
 function changeMonth(delta) {
