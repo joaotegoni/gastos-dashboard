@@ -37,7 +37,7 @@
     --glass-bg-strong: rgba(255, 255, 255, 0.78);
     --glass-border: rgba(255, 255, 255, 0.7);
     --glass-border-inner: rgba(0, 0, 0, 0.04);
-    --glass-blur: blur(28px) saturate(180%);
+    --glass-blur: blur(36px) saturate(200%) brightness(1.05);
 
     /* texto */
     --fg: #1d1d1f;
@@ -45,9 +45,17 @@
     --fg-subtle: #8e8e93;
     --hairline: rgba(60, 60, 67, 0.12);
 
-    /* sombras (sutis, tipo "lift" não "drop") */
-    --shadow-card: 0 1px 1px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(0,0,0,0.10);
-    --shadow-hero: 0 1px 1px rgba(0,0,0,0.06), 0 14px 40px -16px rgba(0,0,0,0.22);
+    /* sombras (sutis, tipo "lift" não "drop") + inner highlights (B: simulam espessura do vidro) */
+    --shadow-card:
+      0 1px 1px rgba(0,0,0,0.04),
+      0 8px 24px -12px rgba(0,0,0,0.10),
+      inset 0 1px 0 rgba(255,255,255,0.65),
+      inset 0 -1px 0 rgba(0,0,0,0.04);
+    --shadow-hero:
+      0 1px 1px rgba(0,0,0,0.06),
+      0 14px 40px -16px rgba(0,0,0,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.45),
+      inset 0 -1px 0 rgba(0,0,0,0.06);
 
     /* highlight specular (linha de luz no topo do vidro) */
     --specular: linear-gradient(
@@ -73,8 +81,16 @@
       --fg-subtle: #8e8e93;
       --hairline: rgba(255, 255, 255, 0.08);
 
-      --shadow-card: 0 1px 1px rgba(0,0,0,0.4), 0 12px 32px -16px rgba(0,0,0,0.6);
-      --shadow-hero: 0 1px 1px rgba(0,0,0,0.5), 0 18px 48px -20px rgba(0,0,0,0.8);
+      --shadow-card:
+        0 1px 1px rgba(0,0,0,0.4),
+        0 12px 32px -16px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.10),
+        inset 0 -1px 0 rgba(0,0,0,0.30);
+      --shadow-hero:
+        0 1px 1px rgba(0,0,0,0.5),
+        0 18px 48px -20px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.14),
+        inset 0 -1px 0 rgba(0,0,0,0.40);
 
       --specular: linear-gradient(
         to bottom,
@@ -112,6 +128,24 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* D: noise grain — fica entre o background ambiente e os cards.
+     O backdrop-filter dos cards captura o grão e o borra junto, criando
+     textura especular dentro do próprio vidro. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' seed='4'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+  }
+  @media (prefers-color-scheme: dark) {
+    body::before { opacity: 0.10; mix-blend-mode: soft-light; }
+  }
+
   /* Tabular numerals em qualquer valor monetário ou percentual */
   .row-value, .stat-value, .balance-value, .renda-value, .renda-pct,
   .person-value, .row-value-stack .teto, .row-sub.budget-resta,
@@ -119,6 +153,9 @@
     font-feature-settings: "tnum" 1, "lnum" 1;
     font-variant-numeric: tabular-nums lining-nums;
   }
+
+  /* Garante que header e #content fiquem acima do grain noise. */
+  header, #content { position: relative; z-index: 1; }
 
   /* ============ Header ============ */
   header {
@@ -541,6 +578,105 @@
     }
   }
 
+  /* ============ Pode investir este mês ============ */
+  .invest-card { padding: 22px 22px 20px; }
+  .invest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .invest-icon { font-size: 22px; opacity: 0.9; }
+  .invest-value {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.05;
+    margin: 4px 0 14px;
+  }
+  .invest-bar {
+    height: 10px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  @media (prefers-color-scheme: dark) {
+    .invest-bar { background: rgba(120,120,128,0.32); }
+  }
+  .invest-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .invest-sub {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--fg-subtle);
+    font-weight: 500;
+  }
+  .invest-sub strong { color: var(--fg); font-weight: 700; }
+
+  /* ============ Distribuição 50 / 30 / 20 ============ */
+  .mix-card { padding: 22px; }
+  .mix-bar {
+    height: 14px;
+    background: rgba(120,120,128,0.16);
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+  }
+  @media (prefers-color-scheme: dark) {
+    .mix-bar { background: rgba(120,120,128,0.32); }
+  }
+  .mix-seg {
+    height: 100%;
+    transition: width 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  /* gradientes de "líquido" pra cada bucket */
+  .seg-ess  { background: linear-gradient(135deg, #007aff, #0a84ff); }
+  .seg-life { background: linear-gradient(135deg, #ff9500, #ffaa33); }
+  .seg-inv  { background: linear-gradient(135deg, #34c759, #30d158); }
+  /* arredondamento só nas pontas externas pra parecer barra inteira */
+  .mix-seg:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
+  .mix-seg:last-child  { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
+
+  .mix-legend {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mix-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto auto auto;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 14px;
+  }
+  .mix-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    align-self: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .dot-ess  { background: var(--ios-blue); }
+  .dot-life { background: var(--ios-orange); }
+  .dot-inv  { background: var(--ios-green); }
+  .mix-name { font-weight: 600; letter-spacing: -0.1px; }
+  .mix-val  { color: var(--fg-subtle); font-weight: 500; }
+  .mix-pct  { font-weight: 800; min-width: 40px; text-align: right; letter-spacing: -0.2px; }
+  .mix-target {
+    font-size: 11px;
+    color: var(--fg-subtle);
+    font-weight: 600;
+    min-width: 56px;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
   /* Fallback: navegadores sem backdrop-filter ganham fundo sólido legível */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .card { background: var(--glass-bg-strong); }
@@ -569,6 +705,15 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjUDtVlV6jvtmv
 
 const RENDA_MENSAL = 13000;
 const PERCENTUAL_ALICE = 0.35;
+
+// Meta de poupança/investimento mensal (regra 50/30/20 sugere 20% da renda).
+const META_POUPANCA = 2600;
+
+// Buckets da regra 50/30/20. "moradia" entra em essenciais (apesar de já estar em FIXOS);
+// como fixos vão direto pro bucket essenciais, "moradia" aqui só é defensivo
+// caso entre como variável avulsa.
+const CATEGORIAS_ESSENCIAIS = ['mercado', 'farmacia', 'transporte', 'moradia', 'saude'];
+const CATEGORIAS_LIFESTYLE  = ['restaurante', 'lazer', 'outro'];
 
 const FIXOS = [
   { motivo: 'Aluguel',    valor: 2407.55, vencimento: 8  },
@@ -676,6 +821,103 @@ function renderFixos() {
     </div>`;
 }
 
+// Card "Pode investir este mês": reframe da sobra como cofre, com meta.
+function renderInvestimento(totalVariavel) {
+  const sobra = RENDA_MENSAL - totalFixos() - totalVariavel;
+  const podeInvestir = Math.max(0, sobra);
+  const pctMeta = META_POUPANCA > 0 ? (podeInvestir / META_POUPANCA) * 100 : 0;
+  const pctBar = Math.min(100, pctMeta);
+
+  let cls, label;
+  if (podeInvestir >= META_POUPANCA) {
+    cls = 'ok';
+    const acima = podeInvestir - META_POUPANCA;
+    label = acima > 0.5
+      ? `<span class="text-ok">✓ Bateu a meta · sobram <strong>${formatBRL(acima)}</strong> além</span>`
+      : `<span class="text-ok">✓ Bateu a meta de ${formatBRL(META_POUPANCA)}</span>`;
+  } else if (podeInvestir > 0) {
+    cls = 'warn';
+    const falta = META_POUPANCA - podeInvestir;
+    label = `Faltam <strong>${formatBRL(falta)}</strong> pra meta de ${formatBRL(META_POUPANCA)}`;
+  } else {
+    cls = 'over';
+    label = `<span class="text-over">Sem disponível este mês</span>`;
+  }
+
+  return `
+    <div class="card invest-card">
+      <div class="invest-header">
+        <div class="stat-label">Pode investir este mês</div>
+        <div class="invest-icon" aria-hidden="true">🪙</div>
+      </div>
+      <div class="invest-value">${formatBRL(podeInvestir)}</div>
+      <div class="invest-bar"><div class="invest-fill bar-${cls}" style="width:${pctBar}%"></div></div>
+      <div class="invest-sub">${label}</div>
+    </div>`;
+}
+
+// Card 50/30/20: distribuição de renda em essenciais / lifestyle / poupança.
+// Recebe porCategoria já agregado e o totalVariavel (pra derivar sobra).
+function render503020(totalVariavel, porCategoria) {
+  const fixos = totalFixos();
+  let essVar = 0, lifeVar = 0;
+  Object.entries(porCategoria).forEach(([cat, val]) => {
+    if (CATEGORIAS_ESSENCIAIS.includes(cat)) essVar += val;
+    else if (CATEGORIAS_LIFESTYLE.includes(cat)) lifeVar += val;
+  });
+  const essenciais   = fixos + essVar;
+  const lifestyle    = lifeVar;
+  const investimento = Math.max(0, RENDA_MENSAL - essenciais - lifestyle);
+
+  // Pra normalizar a barra empilhada, denominador é renda OU total real (o que for maior).
+  const denom = Math.max(RENDA_MENSAL, essenciais + lifestyle + investimento);
+  const segEss  = (essenciais   / denom) * 100;
+  const segLife = (lifestyle    / denom) * 100;
+  const segInv  = (investimento / denom) * 100;
+
+  const realEss  = (essenciais   / RENDA_MENSAL) * 100;
+  const realLife = (lifestyle    / RENDA_MENSAL) * 100;
+  const realInv  = (investimento / RENDA_MENSAL) * 100;
+
+  // Avaliação contra a regra: essenciais ≤50, lifestyle ≤30, poupança ≥20.
+  const clsEss  = realEss  <= 50 ? 'text-ok' : realEss  <= 60 ? 'text-warn' : 'text-over';
+  const clsLife = realLife <= 30 ? 'text-ok' : realLife <= 40 ? 'text-warn' : 'text-over';
+  const clsInv  = realInv  >= 20 ? 'text-ok' : realInv  >= 10 ? 'text-warn' : 'text-over';
+
+  return `
+    <div class="card mix-card">
+      <div class="stat-label" style="margin-bottom:14px">Distribuição 50 / 30 / 20</div>
+      <div class="mix-bar">
+        <div class="mix-seg seg-ess"  style="width:${segEss}%"  title="Essenciais"></div>
+        <div class="mix-seg seg-life" style="width:${segLife}%" title="Lifestyle"></div>
+        <div class="mix-seg seg-inv"  style="width:${segInv}%"  title="Poupança"></div>
+      </div>
+      <div class="mix-legend">
+        <div class="mix-row">
+          <span class="mix-dot dot-ess"></span>
+          <span class="mix-name">Essenciais</span>
+          <span class="mix-val">${formatBRL(essenciais)}</span>
+          <span class="mix-pct ${clsEss}">${Math.round(realEss)}%</span>
+          <span class="mix-target">meta 50%</span>
+        </div>
+        <div class="mix-row">
+          <span class="mix-dot dot-life"></span>
+          <span class="mix-name">Lifestyle</span>
+          <span class="mix-val">${formatBRL(lifestyle)}</span>
+          <span class="mix-pct ${clsLife}">${Math.round(realLife)}%</span>
+          <span class="mix-target">meta 30%</span>
+        </div>
+        <div class="mix-row">
+          <span class="mix-dot dot-inv"></span>
+          <span class="mix-name">Poupança</span>
+          <span class="mix-val">${formatBRL(investimento)}</span>
+          <span class="mix-pct ${clsInv}">${Math.round(realInv)}%</span>
+          <span class="mix-target">meta 20%</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 // Card de renda comprometida: comprometido = fixos + variáveis (sem dividir).
 function renderRenda(totalVariavel) {
   const comprometido = totalFixos() + totalVariavel;
@@ -712,7 +954,7 @@ function render(allRows) {
 
   const rows = allRows.filter(r => r.mes === monthKey);
 
-  // Mês vazio: mostra fixos e renda comprometida (variável = 0) mesmo sem lançamentos.
+  // Mês vazio: mostra fixos, renda, investimento e mix mesmo sem lançamentos.
   if (rows.length === 0) {
     document.getElementById('content').innerHTML = `
       <div class="card empty"><div class="empty-icon">📭</div>Nenhum gasto neste mês</div>
@@ -722,6 +964,12 @@ function render(allRows) {
 
       <div class="section-title">Renda comprometida</div>
       ${renderRenda(0)}
+
+      <div class="section-title">Pode investir</div>
+      ${renderInvestimento(0)}
+
+      <div class="section-title">Distribuição 50 / 30 / 20</div>
+      ${render503020(0, {})}
     `;
     return;
   }
@@ -845,6 +1093,12 @@ function render(allRows) {
 
     <div class="section-title">Renda comprometida</div>
     ${renderRenda(totalGeral)}
+
+    <div class="section-title">Pode investir</div>
+    ${renderInvestimento(totalGeral)}
+
+    <div class="section-title">Distribuição 50 / 30 / 20</div>
+    ${render503020(totalGeral, porCategoria)}
 
     <div class="stats-row">
       <div class="card stat-card">
