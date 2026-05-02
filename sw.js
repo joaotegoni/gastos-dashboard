@@ -1,6 +1,6 @@
 // Service Worker — cache offline + abertura instantânea.
 // Bumpa CACHE_VERSION quando quiser forçar todos os clientes a re-fetchar tudo.
-const CACHE_VERSION = 'gastos-v1';
+const CACHE_VERSION = 'gastos-v2';
 const CSV_HOST = 'docs.google.com';
 
 // Ativos do app que devem estar sempre disponíveis offline.
@@ -8,7 +8,8 @@ const CSV_HOST = 'docs.google.com';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.webmanifest'
+  './manifest.webmanifest',
+  './icon.png'
 ];
 
 self.addEventListener('install', (event) => {

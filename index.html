@@ -7,11 +7,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gastos">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#005870" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#8f58b8" media="(prefers-color-scheme: light)">
 <title>Gastos</title>
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23007aff'/><stop offset='0.6' stop-color='%235856d6'/><stop offset='1' stop-color='%23af52de'/></linearGradient></defs><rect width='180' height='180' fill='url(%23g)' rx='40'/><text x='50%25' y='50%25' font-size='100' font-weight='800' text-anchor='middle' dy='.35em' fill='white' font-family='-apple-system,system-ui,sans-serif'>$</text></svg>">
+<link rel="icon" type="image/png" href="./icon.png">
+<link rel="apple-touch-icon" href="./icon.png">
 <style>
   /* ============================================================
      iOS Liquid Glass — design tokens
@@ -264,10 +265,10 @@
   }
   .card > * { position: relative; z-index: 2; }
 
-  /* ============ Balance card (herói) — glass denso ============ */
+  /* ============ Balance card (herói) — glass denso, cores do ícone ============ */
   .balance-card {
     background:
-      linear-gradient(160deg, rgba(0,122,255,0.85) 0%, rgba(88,86,214,0.78) 60%, rgba(175,82,222,0.74) 100%),
+      linear-gradient(160deg, rgba(0,88,112,0.95) 0%, rgba(143,88,184,0.92) 100%),
       var(--glass-bg-strong);
     color: #fff;
     padding: 28px 24px 26px;
